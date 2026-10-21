@@ -1,58 +1,92 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>NFL Pool 2026–27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fff;--fg:#1a1a1a;--mut:#667;--line:#dde;--card:#f5f6fa;--acc:#0b5fff}
-@media(prefers-color-scheme:dark){:root{--bg:#14161a;--fg:#e8e8ee;--mut:#9aa;--line:#2b2f38;--card:#1d2027;--acc:#6ea0ff}}
-*{box-sizing:border-box}body{margin:0;font:15px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--fg);padding:16px;max-width:980px;margin:auto}
-h1{margin:0 0 2px;font-size:22px}.mut{color:var(--mut);font-size:13px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0}
-.card{background:var(--card);border-radius:8px;padding:8px 10px}.card b{display:block;font-size:18px}
-input{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);margin:6px 0 10px}
-table{width:100%;border-collapse:collapse}th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-th{font-size:12px;color:var(--mut);text-transform:uppercase}td.n,th.n{text-align:right;white-space:nowrap}
-.chip{display:inline-block;background:var(--card);border-radius:10px;padding:1px 7px;margin:1px 3px 1px 0;font-size:12px;white-space:nowrap}
-.chip i{font-style:normal;color:var(--acc);font-weight:600}.pay{color:var(--acc);font-weight:600}
-details{margin-top:18px}.wrap{overflow-x:auto}
+:root{--turf:#0e3b2c;--turf2:#14503b;--bg:#f3f5ef;--card:#fff;--ink:#12201a;--mut:#5d6b63;--line:#dde4da;--gold:#f0b429;--afc:#d1453b;--nfc:#2c6bd6;--chip:#eef2ec}
+@media(prefers-color-scheme:dark){:root{--turf:#0a2a1f;--turf2:#0e3a2b;--bg:#0b1511;--card:#13221b;--ink:#e9efe8;--mut:#93a49a;--line:#233429;--chip:#1b2e24}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Barlow,system-ui,sans-serif}
+.disp{font-family:"Barlow Condensed","Arial Narrow",sans-serif}
+header{background:repeating-linear-gradient(90deg,var(--turf) 0 72px,var(--turf2) 72px 144px);color:#fff;padding:clamp(28px,6vw,56px) 20px 96px;border-bottom:4px solid #fff;position:relative}
+header>div,main{max-width:960px;margin:auto}
+h1{font:800 clamp(48px,11vw,104px)/.88 "Barlow Condensed","Arial Narrow",sans-serif;margin:0;letter-spacing:-.01em}
+h1 span{color:var(--gold)}
+#upd{margin:14px 0 0;color:#cfe3d6;font-size:15px}
+.pod{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:960px;margin:-68px auto 0;padding:0 16px;position:relative}
+.pc{background:var(--card);border-radius:14px;padding:14px 16px 16px;border-top:5px solid var(--c);box-shadow:0 6px 24px rgba(0,0,0,.18);min-width:0}
+.pc:nth-child(1){--c:var(--gold)}.pc:nth-child(2){--c:#aab5ae}.pc:nth-child(3){--c:#c48a52}
+.pc .rk{font:700 18px "Barlow Condensed",sans-serif;color:var(--mut)}
+.pc .nm{font-weight:600;overflow-wrap:anywhere;line-height:1.2;margin:2px 0 6px}
+.pc .sc{font:800 clamp(40px,8vw,64px)/1 "Barlow Condensed",sans-serif}
+.pc .py{color:var(--mut);font-size:14px}
+.stats{display:flex;flex-wrap:wrap;gap:8px 36px;padding:22px 20px 6px}
+.stats div{min-width:110px}.stats b{display:block;font:700 28px/1.1 "Barlow Condensed",sans-serif}.stats span{color:var(--mut);font-size:14px}
+main{padding:8px 16px 48px}
+#q{width:100%;font:inherit;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);margin:14px 0 12px}
+#q:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+details[open]{border-color:var(--turf2)}
+summary{display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:center;padding:10px 14px 10px 8px;cursor:pointer;list-style:none}
+summary::-webkit-details-marker{display:none}
+.r{font:700 28px "Barlow Condensed",sans-serif;text-align:center;color:var(--mut)}.r.top{color:var(--ink)}
+.n{min-width:0}.n b{font-weight:600}.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chip{background:var(--chip);border-radius:999px;padding:1px 9px 1px 7px;font-size:13px;white-space:nowrap}
+.chip:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--k);margin-right:5px}
+.AFC{--k:var(--afc)}.NFC{--k:var(--nfc)}
+.t{font:800 36px "Barlow Condensed",sans-serif;text-align:right;line-height:1}
+.dt{padding:2px 14px 14px 66px;font-size:15px;overflow-x:auto}
+table{border-collapse:collapse;width:100%}th,td{padding:5px 8px 5px 0;text-align:left;border-bottom:1px solid var(--line)}th{color:var(--mut);font-weight:500;font-size:13px}
+td.x,th.x{text-align:right;padding-right:0}
+.mut{color:var(--mut);font-size:14px}
+.tp{margin-top:28px}.tp summary{display:block;padding:12px 14px;font-weight:600}.tp .dt{padding-left:14px}
+.empty{padding:24px;text-align:center;color:var(--mut)}
+@media(max-width:560px){.pod{gap:8px;padding:0 10px}.pc{padding:10px}summary{grid-template-columns:38px 1fr auto}.dt{padding-left:14px}}
 </style></head><body>
-<h1>NFL Pool 2026–27</h1>
-<div class="mut" id="upd">Loading…</div>
-<div class="cards" id="cards"></div>
-<input id="q" type="search" placeholder="Search by name or team…">
-<div class="wrap"><table><thead><tr><th class="n">#</th><th>Entry</th><th>Teams (points)</th><th class="n">Reg. season</th><th class="n">Total</th></tr></thead><tbody id="rows"></tbody></table></div>
-<details><summary>Team points &amp; scoring</summary><div class="wrap"><table id="tt"></table></div>
-<p class="mut">1 pt per regular-season win · +5 division winner · 3 per playoff win · +5 conference champion · +5 Super Bowl winner. Ties are broken by total Super Bowl points. Payouts: 50% / 25% / 15% overall (1st–3rd), 10% regular-season leader.</p></details>
+<header><div><h1>NFL Pool<br><span>2026–27</span></h1><p id="upd">Loading standings…</p></div></header>
+<section class="pod" id="pod" aria-label="Top three entries"></section>
+<main>
+<div class="stats" id="stats"></div>
+<input id="q" type="search" placeholder="Find your entry or a team" aria-label="Search entries or teams">
+<div id="rows"></div>
+<details class="tp"><summary>Team points and scoring rules</summary><div class="dt"><table id="tt"></table>
+<p class="mut">Each team earns 1 point per regular-season win, 5 for winning its division, 3 per playoff win, 5 for a conference title and 5 for the Super Bowl. An entry's score is the sum of its teams. Ties are broken by total Super Bowl points. Prizes: 50%, 25% and 15% to the top three overall, 10% to the regular-season leader.</p></div></details>
+</main>
 <script>
 let E,T,S,rows=[];const $=id=>document.getElementById(id);
 const pts=a=>{const s=S.teams[a]||{};return (s.w||0)+(s.div?5:0)+3*(s.pw||0)+(s.conf?5:0)+(s.sb?5:0)};
 const reg=a=>{const s=S.teams[a]||{};return (s.w||0)+(s.div?5:0)};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const usd=n=>'$'+Math.round(n).toLocaleString();
 async function load(){
   const j=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u);return r.json()});
   [E,T,S]=await Promise.all([j('data/entries.json'),j('data/teams.json'),j('data/standings.json')]);
   rows=E.map(e=>({...e,total:e.t.reduce((s,a)=>s+pts(a),0),reg:e.t.reduce((s,a)=>s+reg(a),0)}))
     .sort((a,b)=>b.total-a.total||a.n.localeCompare(b.n));
   rows.forEach((r,i)=>r.rank=i&&r.total===rows[i-1].total?rows[i-1].rank:i+1);
-  const pot=rows.length*25,top=Math.max(...rows.map(r=>r.reg)),rl=rows.filter(r=>r.reg===top);
-  $('upd').textContent=S.updated?'Standings updated '+new Date(S.updated).toLocaleString():'Standings not yet updated automatically';
-  const lead=rows.filter(r=>r.rank===1);
-  $('cards').innerHTML=[['Entries',rows.length],['Pot','$'+pot.toLocaleString()],
-    ['Overall leader',lead.map(r=>esc(r.n)).join(', ')+' ('+lead[0].total+')'],
-    ['Reg. season leader',rl.map(r=>esc(r.n)).join(', ')+' ('+top+')']]
-    .map(([k,v])=>`<div class="card"><span class="mut">${k}</span><b>${v}</b></div>`).join('');
-  const pay=[.5,.25,.15];rows.forEach(r=>r.pay=r.rank<=3?'$'+Math.round(pot*pay[r.rank-1]).toLocaleString():'');
+  const cnt={};rows.forEach(r=>cnt[r.rank]=(cnt[r.rank]||0)+1);
+  rows.forEach(r=>r.lbl=(cnt[r.rank]>1?'T':'')+r.rank);
+  const pot=rows.length*25,top=Math.max(...rows.map(r=>r.reg)),rl=rows.filter(r=>r.reg===top),pay=[.5,.25,.15];
+  $('upd').textContent=S.updated?'Standings updated '+new Date(S.updated).toLocaleString([], {weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'Waiting for the first automatic standings update';
+  $('pod').innerHTML=rows.slice(0,3).map(r=>`<div class="pc"><div class="rk">${r.lbl}</div><div class="nm">${esc(r.n)}</div><div class="sc">${r.total}</div><div class="py">${cnt[r.rank]>1?'Tied':usd(pot*pay[r.rank-1])}</div></div>`).join('');
+  $('stats').innerHTML=[[rows.length,'entries'],[usd(pot),'total pot'],[rl.length>2?rl.length+' tied':rl.map(r=>esc(r.n)).join(', '),'lead the regular season with '+top]]
+    .map(([v,k])=>`<div><b>${v}</b><span>${k}</span></div>`).join('');
+  $('tt').innerHTML='<tr><th>Team</th><th class="x">Record</th><th class="x">Division</th><th class="x">Playoff wins</th><th class="x">Points</th></tr>'+
+    Object.keys(T).sort((a,b)=>pts(b)-pts(a)||T[a].name.localeCompare(T[b].name)).map(a=>{const s=S.teams[a]||{};return `<tr><td>${T[a].name}</td><td class="x">${s.w||0}-${s.l||0}</td><td class="x">${s.div?'Won':''}</td><td class="x">${s.pw||0}</td><td class="x">${pts(a)}</td></tr>`}).join('');
   draw();
-  const ids=Object.keys(T).sort((a,b)=>pts(b)-pts(a));
-  $('tt').innerHTML='<tr><th>Team</th><th class="n">W-L</th><th class="n">Div</th><th class="n">Playoff W</th><th class="n">Pts</th></tr>'+
-    ids.map(a=>{const s=S.teams[a]||{};return `<tr><td>${T[a].name}</td><td class="n">${s.w||0}-${s.l||0}</td><td class="n">${s.div?'✓':''}</td><td class="n">${s.pw||0}</td><td class="n">${pts(a)}</td></tr>`}).join('');
 }
 function draw(){
-  const q=$('q').value.toLowerCase();
-  $('rows').innerHTML=rows.filter(r=>!q||r.n.toLowerCase().includes(q)||r.t.some(a=>T[a].name.toLowerCase().includes(q))).map(r=>
-    `<tr><td class="n">${r.rank}</td><td>${esc(r.n)}${r.pay?`<br><span class="pay">${r.pay}</span>`:''}</td><td>${r.t.map(a=>`<span class="chip">${T[a].name} <i>${pts(a)}</i></span>`).join('')}</td><td class="n">${r.reg}</td><td class="n"><b>${r.total}</b></td></tr>`).join('');
+  const q=$('q').value.toLowerCase(),open=new Set([...document.querySelectorAll('details[open][data-i]')].map(d=>d.dataset.i));
+  const list=rows.map((r,i)=>({r,i})).filter(({r})=>!q||r.n.toLowerCase().includes(q)||r.t.some(a=>T[a].name.toLowerCase().includes(q)));
+  $('rows').innerHTML=list.length?list.map(({r,i})=>{
+    const ts=r.t.slice().sort((a,b)=>pts(b)-pts(a));
+    return `<details data-i="${i}"${open.has(String(i))?' open':''}><summary><span class="r ${r.rank<=3?'top':''}">${r.lbl}</span><span class="n"><b>${esc(r.n)}</b><span class="chips">${ts.map(a=>`<span class="chip ${T[a].conf}">${T[a].name} ${pts(a)}</span>`).join('')}</span></span><span class="t">${r.total}</span></summary>
+    <div class="dt"><table><tr><th>Team</th><th class="x">Record</th><th class="x">Division</th><th class="x">Playoff wins</th><th class="x">Points</th></tr>${ts.map(a=>{const s=S.teams[a]||{};return `<tr><td>${T[a].name}</td><td class="x">${s.w||0}-${s.l||0}</td><td class="x">${s.div?'Won':''}</td><td class="x">${s.pw||0}</td><td class="x">${pts(a)}</td></tr>`}).join('')}</table>
+    <p class="mut">Regular-season points: ${r.reg}${r.tb!=null?'. Tiebreaker: '+esc(r.tb):''}</p></div></details>`}).join(''):'<div class="empty">No entries or teams match that search.</div>';
 }
 $('q').addEventListener('input',draw);
-load().catch(e=>$('upd').textContent='Could not load data: '+e);
+load().catch(e=>$('upd').textContent='Could not load pool data. Try refreshing in a minute.');
 setInterval(()=>load().catch(()=>{}),300000);
 </script></body></html>
