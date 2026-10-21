@@ -7,7 +7,8 @@ const norm = a => ({ WAS: 'WSH', JAC: 'JAX', LA: 'LAR' }[a] || a);
 const get = async u => { const r = await fetch(u); if (!r.ok) throw new Error(`${r.status} ${u}`); return r.json(); };
 const stat = (e, n) => e.stats?.find(s => s.name === n);
 const valid = new Set(Object.keys(JSON.parse(readFileSync('data/teams.json'))));
-const prev = JSON.parse(readFileSync('data/standings.json')).teams || {};
+const old = JSON.parse(readFileSync('data/standings.json'));
+const prev = old.teams || {};
 
 const sd = await get(`${BASE}/v2/sports/football/nfl/standings?season=${SEASON}`);
 const teams = {};
@@ -44,6 +45,42 @@ if (!playoffsOk) for (const [a, t] of Object.entries(teams)) if (prev[a]) Object
 if (existsSync('data/overrides.json')) {
   for (const [a, v] of Object.entries(JSON.parse(readFileSync('data/overrides.json')))) Object.assign(teams[a] || {}, v);
 }
-for (const t of Object.values(teams)) { delete t.gp; delete t.seed; }
-writeFileSync('data/standings.json', JSON.stringify({ updated: new Date().toISOString(), teams }));
+
+// ---- Projections: expected remaining wins + division-title odds (Monte Carlo simulation) ----
+const ab = Object.keys(teams), meta = JSON.parse(readFileSync('data/teams.json'));
+const cur = a => { const t = teams[a]; return t.w + (t.div ? 5 : 0) + 3 * t.pw + (t.conf ? 5 : 0) + (t.sb ? 5 : 0); };
+const maxgp = Math.max(...ab.map(a => teams[a].gp));
+const games = new Map();
+await Promise.all(ab.map(async a => { try {
+  const s = await get(`${BASE}/site/v2/sports/football/nfl/teams/${a.toLowerCase()}/schedule?season=${SEASON}&seasontype=2`);
+  for (const ev of s.events || []) {
+    const c = ev.competitions?.[0];
+    if (!c || (c.status ?? ev.status)?.type?.completed) continue;
+    const h = c.competitors.find(x => x.homeAway === 'home'), v = c.competitors.find(x => x.homeAway === 'away');
+    if (h && v) games.set(ev.id, [norm(h.team.abbreviation), norm(v.team.abbreviation)]);
+  }
+} catch (e) { console.warn('Schedule', a, e.message); } }));
+if (games.size) {
+  // Win odds per game: each team's record (pulled toward .500 early in the season) plus a small home-field edge.
+  const rate = a => { const p = (teams[a].w + 4) / (teams[a].gp + 8); return Math.log(p / (1 - p)); };
+  const list = [...games.values()].filter(([h, v]) => teams[h] && teams[v]).map(([h, v]) => [h, v, 1 / (1 + Math.exp(-(rate(h) - rate(v) + 0.25)))]);
+  const groups = {}; for (const a of ab) (groups[meta[a].conf + meta[a].div] ??= []).push(a);
+  const N = 2000, ew = {}, dw = {}; ab.forEach(a => { ew[a] = 0; dw[a] = 0; });
+  for (let i = 0; i < N; i++) {
+    const w = {}; ab.forEach(a => w[a] = teams[a].w);
+    for (const [h, v, p] of list) w[Math.random() < p ? h : v]++;
+    ab.forEach(a => ew[a] += w[a] - teams[a].w);
+    for (const g of Object.values(groups)) {
+      if (g.some(a => teams[a].div)) continue;
+      const best = Math.max(...g.map(a => w[a])), c = g.filter(a => w[a] === best);
+      dw[c[Math.floor(Math.random() * c.length)]]++;
+    }
+  }
+  for (const a of ab) teams[a].proj = +(cur(a) + ew[a] / N + (teams[a].div ? 0 : 5 * dw[a] / N)).toFixed(1);
+} else console.warn('No remaining games found; skipping projections');
+// Weekly snapshot (keyed by games played) so the page can show movement since last week.
+const history = old.history || {};
+history[maxgp] = { updated: new Date().toISOString(), pts: Object.fromEntries(ab.map(a => [a, cur(a)])) };
+for (const t of Object.values(teams)) delete t.seed;
+writeFileSync('data/standings.json', JSON.stringify({ updated: new Date().toISOString(), maxgp, history, teams }));
 console.log('Updated', Object.keys(teams).length, 'teams');
