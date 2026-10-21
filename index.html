@@ -60,7 +60,7 @@ td.x,th.x{text-align:right;padding-right:0}
 <input id="q" type="search" placeholder="Find your entry or a team" aria-label="Search entries or teams">
 <div id="rows"></div>
 <details class="tp"><summary>Team points and scoring rules</summary><div class="dt"><table id="tt"></table>
-<p class="mut">Each team earns 1 point per regular-season win, 5 for winning its division, 3 per playoff win, 5 for a conference title and 5 for the Super Bowl. An entry's score is the sum of its teams. Projected points add each team's expected remaining wins and its chance of winning the division to its current points; playoff points are not projected. Movement compares with the end of last week. Ties are broken by total Super Bowl points. Prizes: 50%, 25% and 15% to the top three overall, 10% to the regular-season leader.</p></div></details>
+<p class="mut">Each team earns 1 point per regular-season win, 5 for winning its division, 3 per playoff win, 5 for a conference title and 5 for the Super Bowl. An entry's score is the sum of its teams. Projections come from 2,000 simulated finishes to the regular season. A team's projected points are its current points plus its expected remaining wins and its chance of winning the division (shown as Division odds); playoff points are not projected. Proj. record is the average simulated finish. Movement compares with the end of last week. Ties are broken by total Super Bowl points. Prizes: 50%, 25% and 15% to the top three overall, 10% to the regular-season leader.</p></div></details>
 </main>
 <script>
 let E,T,S,H={},rows=[],hp,mode='total',stats='';const $=id=>document.getElementById(id);
@@ -89,8 +89,8 @@ async function load(){
   $('stats').innerHTML=[[rows.length,'entries'],[usd(rows.length*25),'total pot'],[rl.length>2?rl.length+' tied':rl.map(r=>esc(r.n)).join(', '),'lead the regular season with '+top],
     ...(mm.length&&mm.length<4?[[mm.map(r=>esc(r.n)).join(', '),'biggest climb, up '+mx+(mx>1?' spots':' spot')]]:[])]
     .map(([v,k])=>`<div><b>${v}</b><span>${k}</span></div>`).join('');
-  const tr=a=>{const s=S.teams[a]||{};return `<tr><td>${img(a,'tl')}${T[a].name}</td><td class="x">${s.w||0}-${s.l||0}</td><td class="x">${s.div?'Won':''}</td><td class="x">${s.pw||0}</td><td class="x">${P(a)}</td><td class="x">${prj(a).toFixed(1)}</td></tr>`};
-  const th='<tr><th>Team</th><th class="x">Record</th><th class="x">Division</th><th class="x">Playoff wins</th><th class="x">Points</th><th class="x">Projected</th></tr>';
+  const tr=a=>{const s=S.teams[a]||{};return `<tr><td>${img(a,'tl')}${T[a].name}</td><td class="x">${s.w||0}-${s.l||0}</td><td class="x">${s.pwins!=null?Math.round(s.pwins)+'-'+(17-Math.round(s.pwins)):''}</td><td class="x">${s.div?'Won':s.pdiv!=null?s.pdiv+'%':''}</td><td class="x">${s.pw||0}</td><td class="x">${P(a)}</td><td class="x">${prj(a).toFixed(1)}</td></tr>`};
+  const th='<tr><th>Team</th><th class="x">Record</th><th class="x">Proj. record</th><th class="x">Division</th><th class="x">Playoff wins</th><th class="x">Points</th><th class="x">Proj. points</th></tr>';
   window.tr=tr;window.th=th;
   $('tt').innerHTML=th+Object.keys(T).sort((a,b)=>P(b)-P(a)||T[a].name.localeCompare(T[b].name)).map(tr).join('');
   render();
@@ -102,10 +102,10 @@ function render(){
   const list=rows.filter(r=>!q||r.n.toLowerCase().includes(q)||r.t.some(a=>T[a].name.toLowerCase().includes(q)));
   $('rows').innerHTML=list.length?list.map(r=>{
     const ts=r.t.slice().sort((a,b)=>P(b)-P(a)),mv=hp&&k==='total'?(r.mv>0?`<span class="mv up">▲${r.mv}</span>`:r.mv<0?`<span class="mv dn">▼${-r.mv}</span>`:''):'';
-    const sub=k==='proj'?`${r.total} now`:(hp?`${r.dp>=0?'+':''}${r.dp} this week`:'')+(r.proj!==r.total?`<br>proj ${r.proj.toFixed(0)}`:'');
+    const sub=k==='proj'?`${r.total} now`:(hp?`${r.dp>=0?'+':''}${r.dp} this week`:'')+(r.proj!==r.total?`<br>+${(r.proj-r.total).toFixed(1)} proj.`:'');
     return `<details data-i="${r.id}"${open.has(String(r.id))?' open':''}><summary><span class="r ${r.rank<=3?'top':''}">${r.lbl}${mv}</span><span class="n"><b>${esc(r.n)}</b><span class="chips">${ts.map(a=>`<span class="chip ${T[a].conf}">${img(a)}${P(a)}</span>`).join('')}</span></span><span class="t">${k==='proj'?r.proj.toFixed(1):r.total}<span class="sub">${sub}</span></span></summary>
     <div class="dt"><table>${th}${ts.map(tr).join('')}</table>
-    <p class="mut">Regular-season points: ${r.reg}. Projected final: ${r.proj.toFixed(1)}.${hp?` Last week: ${r.prev} points, rank ${r.prev!=null?1+rows.filter(o=>o.prev>r.prev).length:'–'}.`:''}${r.tb!=null?' Tiebreaker: '+esc(r.tb)+'.':''}</p></div></details>`}).join(''):'<div class="empty">No entries or teams match that search.</div>';
+    <p class="mut">Regular-season points so far: ${r.reg}. Projected remaining: +${(r.proj-r.total).toFixed(1)}, for a projected total of ${r.proj.toFixed(1)}.${hp?` Last week: ${r.prev} points, rank ${r.prev!=null?1+rows.filter(o=>o.prev>r.prev).length:'–'}.`:''}${r.tb!=null?' Tiebreaker: '+esc(r.tb)+'.':''}</p></div></details>`}).join(''):'<div class="empty">No entries or teams match that search.</div>';
 }
 $('q').addEventListener('input',render);
 $('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;mode=b.dataset.m;document.querySelectorAll('#seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));render()});

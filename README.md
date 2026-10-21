@@ -1,4 +1,4 @@
-# NFL Pool 2026–27
+# Cool Pool 2026–27
 Static site: `index.html` reads `data/*.json` and recalculates every entry in the browser.
 A GitHub Action (`.github/workflows/update.yml`) refreshes `data/standings.json` every 3 hours.
 
