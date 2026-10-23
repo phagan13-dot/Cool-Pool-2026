@@ -51,16 +51,23 @@ td.x,th.x{text-align:right;padding-right:0}
 .seg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;margin-top:14px}
 .seg button{font:inherit;padding:7px 16px;border:0;background:var(--card);color:var(--ink);cursor:pointer}.seg button[aria-pressed=true]{background:var(--turf2);color:#fff}
 #q{margin-top:10px}.tl{width:22px;height:22px;vertical-align:middle;margin-right:7px;object-fit:contain}
+.seg{display:flex;overflow-x:auto;max-width:100%;scrollbar-width:none}.seg button{white-space:nowrap;flex:none}
+[hidden]{display:none!important}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 16px 16px;margin-top:10px}
+.panel h3{font:800 30px/1.1 "Barlow Condensed",sans-serif;margin:14px 0 4px}.panel h4{font:700 21px "Barlow Condensed",sans-serif;margin:22px 0 6px}
+.wrap{overflow-x:auto}.st td,.st th{white-space:nowrap}.st th{vertical-align:bottom}
+.st tr.dv td{font:700 17px "Barlow Condensed",sans-serif;color:var(--mut);padding-top:16px;border-bottom:2px solid var(--line)}
+.rt td:first-child{font-weight:600;white-space:nowrap;padding-right:18px}.rt .chip{margin:2px 4px 2px 0}.panel ul{margin:6px 0;padding-left:20px}.panel li{margin:3px 0}
 </style></head><body>
 <header><div><h1>Cool Pool<br><span>2026–27</span></h1><p id="upd">Loading standings…</p></div></header>
 <section class="pod" id="pod" aria-label="Top three entries"></section>
 <main>
 <div class="stats" id="stats"></div>
-<div class="seg" id="seg" role="group" aria-label="Rank by"><button data-m="total" aria-pressed="true">Current points</button><button data-m="proj" aria-pressed="false">Projected final</button></div>
-<input id="q" type="search" placeholder="Find your entry or a team" aria-label="Search entries or teams">
-<div id="rows"></div>
-<details class="tp"><summary>Team points and scoring rules</summary><div class="dt"><table id="tt"></table>
-<p class="mut">Each team earns 1 point per regular-season win, 5 for winning its division, 3 per playoff win, 5 for a conference title and 5 for the Super Bowl. An entry's score is the sum of its teams. Projections come from 2,000 simulated finishes to the regular season. A team's projected points are its current points plus its expected remaining wins and its chance of winning the division (shown as Division odds); playoff points are not projected. Proj. record is the average simulated finish. Movement compares with the end of last week. Ties are broken by total Super Bowl points. Prizes: 50%, 25% and 15% to the top three overall, 10% to the regular-season leader.</p></div></details>
+<nav class="seg" id="seg" aria-label="Views"><button data-m="total" aria-pressed="true">Current points</button><button data-m="proj" aria-pressed="false">Projected final</button><button data-m="standings" aria-pressed="false">NFL Standings/Scoring</button><button data-m="rules" aria-pressed="false">Scoring rules</button></nav>
+<div id="v-lb"><input id="q" type="search" placeholder="Find your entry or a team" aria-label="Search entries or teams"><div id="rows"></div></div>
+<section id="v-st" class="panel" hidden><h3>NFL Standings/Scoring</h3><div class="wrap"><table class="st" id="tt"></table></div>
+<p class="mut">Projected record and division odds come from 2,000 simulated finishes to the regular season, using each team's record, its remaining games and a small home-field edge. Projected record is the average simulated finish, rounded. Projected regular season points = expected total wins (1 point each) + chance of winning the division × 5 points. Playoff points are not projected.</p></section>
+<section id="v-ru" class="panel" hidden></section>
 </main>
 <script>
 let E,T,S,H={},rows=[],hp,mode='total',stats='';const $=id=>document.getElementById(id);
@@ -85,14 +92,26 @@ async function load(){
   const top=Math.max(...rows.map(r=>r.reg)),rl=rows.filter(r=>r.reg===top),mx=hp?Math.max(...rows.map(r=>r.mv)):0,mm=rows.filter(r=>hp&&r.mv===mx&&mx>0);
   $('upd').textContent=S.updated?'Standings updated '+new Date(S.updated).toLocaleString([], {weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'Waiting for the first automatic standings update';
   const hasP=Object.values(S.teams).some(t=>t.proj!=null);
-  $('seg').style.display=hasP?'':'none';
+  document.querySelector('[data-m=proj]').hidden=!hasP;
   $('stats').innerHTML=[[rows.length,'entries'],[usd(rows.length*25),'total pot'],[rl.length>2?rl.length+' tied':rl.map(r=>esc(r.n)).join(', '),'lead the regular season with '+top],
     ...(mm.length&&mm.length<4?[[mm.map(r=>esc(r.n)).join(', '),'biggest climb, up '+mx+(mx>1?' spots':' spot')]]:[])]
     .map(([v,k])=>`<div><b>${v}</b><span>${k}</span></div>`).join('');
   const tr=a=>{const s=S.teams[a]||{};return `<tr><td>${img(a,'tl')}${T[a].name}</td><td class="x">${s.w||0}-${s.l||0}</td><td class="x">${s.pwins!=null?Math.round(s.pwins)+'-'+(17-Math.round(s.pwins)):''}</td><td class="x">${s.div?'Won':s.pdiv!=null?s.pdiv+'%':''}</td><td class="x">${s.pw||0}</td><td class="x">${P(a)}</td><td class="x">${prj(a).toFixed(1)}</td></tr>`};
   const th='<tr><th>Team</th><th class="x">Record</th><th class="x">Proj. record</th><th class="x">Division</th><th class="x">Playoff wins</th><th class="x">Points</th><th class="x">Proj. points</th></tr>';
   window.tr=tr;window.th=th;
-  $('tt').innerHTML=th+Object.keys(T).sort((a,b)=>P(b)-P(a)||T[a].name.localeCompare(T[b].name)).map(tr).join('');
+  const pp=s=>s.pwins!=null&&s.pdiv!=null?+(s.pwins+5*s.pdiv/100).toFixed(1):null;
+  const dvs=['AFC East','AFC North','AFC South','AFC West','NFC East','NFC North','NFC South','NFC West'];
+  $('tt').innerHTML='<tr><th>Team</th><th class="x">Current Record</th><th class="x">Projected Record</th><th class="x">% Odds to Win Division</th><th class="x">Projected Regular Season Points</th></tr>'+
+    dvs.map(d=>{const [c,v]=d.split(' ');return `<tr class="dv"><td colspan="5">${d}</td></tr>`+Object.keys(T).filter(a=>T[a].conf===c&&T[a].div===v)
+      .sort((a,b)=>((S.teams[b]||{}).w||0)-((S.teams[a]||{}).w||0)||(pp(S.teams[b]||{})||0)-(pp(S.teams[a]||{})||0)).map(a=>{const s=S.teams[a]||{},x=pp(s);
+        return `<tr><td>${img(a,'tl')}${T[a].name}</td><td class="x">${s.w||0}-${s.l||0}</td><td class="x">${s.pwins!=null?Math.round(s.pwins)+'-'+(17-Math.round(s.pwins)):'–'}</td><td class="x">${s.pdiv!=null?s.pdiv+'%':s.div?'100%':'–'}</td><td class="x">${x!=null?x.toFixed(1):'–'}</td></tr>`}).join('')}).join('');
+  const pot=E.length*25,byV={};Object.keys(T).forEach(a=>(byV[T[a].price]??=[]).push(a));
+  $('v-ru').innerHTML=`<h3>Scoring rules</h3>
+  <h4>Scoring</h4><table class="rt"><tr><td>1 point</td><td>Each regular season win</td></tr><tr><td>3 points</td><td>Each playoff win</td></tr><tr><td>5 points</td><td>Division winner (included in regular season point total)</td></tr><tr><td>5 points</td><td>AFC/NFC conference champion</td></tr><tr><td>5 points</td><td>Super Bowl winner</td></tr></table>
+  <h4>Payout</h4><table class="rt">${[['Highest overall point total',.5],['Second highest',.25],['Third highest',.15],['Regular season point winner',.1]].map(([k,f])=>`<tr><td>${f*100}%</td><td>${k} (${usd(pot*f)} of the ${usd(pot)} pot)</td></tr>`).join('')}</table>
+  <p>All ties will be decided by the total number of points in the Super Bowl.</p>
+  <h4>Entries</h4><ul><li>The dollar amounts below are per team.</li><li>The total of your teams must not exceed $25.00.</li><li>If your teams total less than $25.00, your entry fee is still $25.00, the minimum.</li></ul>
+  <h4>Team values</h4><table class="rt">${Object.keys(byV).sort((a,b)=>b-a).map(v=>`<tr><td>$${Number(v).toFixed(2)}</td><td>${byV[v].sort((a,b)=>T[a].name.localeCompare(T[b].name)).map(a=>`<span class="chip ${T[a].conf}">${img(a)}${T[a].name}</span>`).join('')}</td></tr>`).join('')}</table>`;
   render();
 }
 function render(){
@@ -108,7 +127,10 @@ function render(){
     <p class="mut">Regular-season points so far: ${r.reg}. Projected remaining: +${(r.proj-r.total).toFixed(1)}, for a projected total of ${r.proj.toFixed(1)}.${hp?` Last week: ${r.prev} points, rank ${r.prev!=null?1+rows.filter(o=>o.prev>r.prev).length:'–'}.`:''}${r.tb!=null?' Tiebreaker: '+esc(r.tb)+'.':''}</p></div></details>`}).join(''):'<div class="empty">No entries or teams match that search.</div>';
 }
 $('q').addEventListener('input',render);
-$('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;mode=b.dataset.m;document.querySelectorAll('#seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));render()});
+$('seg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const m=b.dataset.m;
+  document.querySelectorAll('#seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  $('v-lb').hidden=!(m==='total'||m==='proj');$('v-st').hidden=m!=='standings';$('v-ru').hidden=m!=='rules';
+  if(m==='total'||m==='proj'){mode=m;render()}});
 load().catch(e=>$('upd').textContent='Could not load pool data. Try refreshing in a minute.');
 setInterval(()=>load().catch(()=>{}),300000);
 </script></body></html>
