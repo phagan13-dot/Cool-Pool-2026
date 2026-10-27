@@ -1,7 +1,16 @@
 name: Update standings
 on:
-  schedule: [{cron: '0 */3 * * *'}]
-  workflow_dispatch:
+  schedule:
+    - cron: '0 */3 * * *'          # baseline: every 3 hours, every day
+    # Extra checks every 15 minutes while games are expected to finish (times are UTC and cover both EDT and EST)
+    - cron: '*/15 2-5 * * 5'       # Thursday night games (and Thanksgiving / Christmas nights)
+    - cron: '*/15 16-23 * * 0'     # Sunday: international, 1 pm and 4 pm games
+    - cron: '*/15 0-5 * * 1'       # Sunday night game finishing
+    - cron: '*/15 2-5 * * 2'       # Monday night game
+    - cron: '*/20 17-23 * * 4'     # Thursday afternoon/evening holiday games
+    - cron: '*/20 0-5,17-23 * * 6' # Saturday games (late season and playoffs) and Friday night games
+    - cron: '*/20 0-5 * * 0'       # Saturday night games finishing
+  workflow_dispatch:                # lets you run it by hand from the Actions tab
 permissions: {contents: write}
 jobs:
   update:
