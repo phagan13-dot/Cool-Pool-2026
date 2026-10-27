@@ -60,27 +60,41 @@ await Promise.all(ab.map(async a => { try {
     if (h && v) games.set(ev.id, [norm(h.team.abbreviation), norm(v.team.abbreviation)]);
   }
 } catch (e) { console.warn('Schedule', a, e.message); } }));
-if (games.size) {
+{
   // Win odds per game: each team's record (pulled toward .500 early in the season) plus a small home-field edge.
   const rate = a => { const p = (teams[a].w + 4) / (teams[a].gp + 8); return Math.log(p / (1 - p)); };
-  const list = [...games.values()].filter(([h, v]) => teams[h] && teams[v]).map(([h, v]) => [h, v, 1 / (1 + Math.exp(-(rate(h) - rate(v) + 0.25)))]);
+  let list = [...games.values()].filter(([h, v]) => teams[h] && teams[v]).map(([h, v]) => [h, v, 1 / (1 + Math.exp(-(rate(h) - rate(v) + 0.25)))]);
+  if (!list.length && ab.some(a => teams[a].gp < 17)) {
+    // Schedule feed unavailable: simulate each team's remaining games against an average opponent instead.
+    console.warn('No remaining schedule found; using average-opponent fallback');
+    list = ab.flatMap(a => Array.from({ length: Math.max(0, 17 - teams[a].gp) }, () => [a, null, 1 / (1 + Math.exp(-rate(a)))]));
+  }
   const groups = {}; for (const a of ab) (groups[meta[a].conf + meta[a].div] ??= []).push(a);
+  let seed = [...JSON.stringify(ab.map(a => [a, teams[a].w, teams[a].l, teams[a].pw, teams[a].div]))].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0, 2166136261);
+  const rnd = () => { seed = (seed + 0x6D2B79F5) >>> 0; let t = seed; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const N = 2000, ew = {}, dw = {}; ab.forEach(a => { ew[a] = 0; dw[a] = 0; });
   for (let i = 0; i < N; i++) {
     const w = {}; ab.forEach(a => w[a] = teams[a].w);
-    for (const [h, v, p] of list) w[Math.random() < p ? h : v]++;
+    for (const [h, v, p] of list) { const x = rnd() < p ? h : v; if (x) w[x]++; }
     ab.forEach(a => ew[a] += w[a] - teams[a].w);
     for (const g of Object.values(groups)) {
       if (g.some(a => teams[a].div)) continue;
       const best = Math.max(...g.map(a => w[a])), c = g.filter(a => w[a] === best);
-      dw[c[Math.floor(Math.random() * c.length)]]++;
+      dw[c[Math.floor(rnd() * c.length)]]++;
     }
   }
-  for (const a of ab) teams[a].proj = +(cur(a) + ew[a] / N + (teams[a].div ? 0 : 5 * dw[a] / N)).toFixed(1);
-} else console.warn('No remaining games found; skipping projections');
+  // proj = projected regular-season points (wins + division bonus); pwins = average simulated final wins; pdiv = division-title odds %
+  for (const a of ab) {
+    const t = teams[a];
+    t.proj = +(cur(a) + ew[a] / N + (t.div ? 0 : 5 * dw[a] / N)).toFixed(1);
+    t.pwins = +(t.w + ew[a] / N).toFixed(1);
+    t.pdiv = t.div ? 100 : Math.round(100 * dw[a] / N);
+  }
+}
 // Weekly snapshot (keyed by games played) so the page can show movement since last week.
 const history = old.history || {};
 history[maxgp] = { updated: new Date().toISOString(), pts: Object.fromEntries(ab.map(a => [a, cur(a)])) };
 for (const t of Object.values(teams)) delete t.seed;
+if (old.maxgp === maxgp && JSON.stringify(old.teams) === JSON.stringify(teams)) { console.log('No change since last update'); process.exit(0); }
 writeFileSync('data/standings.json', JSON.stringify({ updated: new Date().toISOString(), maxgp, history, teams }));
 console.log('Updated', Object.keys(teams).length, 'teams');
